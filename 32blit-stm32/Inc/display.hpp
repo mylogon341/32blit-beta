@@ -17,6 +17,9 @@ namespace display {
   extern ScreenMode mode;
   extern bool needs_render;
 
+  const blit::Size lo_res;
+  const blit::Size hi_res;
+
   void init();  
 
   void enable_vblank_interrupt(); 
@@ -26,6 +29,8 @@ namespace display {
 
   void screen_init();
   void ltdc_init();
+
+  Size size();
 
 }
 

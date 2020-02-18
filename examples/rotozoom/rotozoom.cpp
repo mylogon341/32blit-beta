@@ -3,7 +3,7 @@
 #include <string.h>
 #include <memory>
 #include <cstdlib>
-
+#include "screen.h"
 
 #include "rotozoom.hpp"
 
@@ -32,8 +32,8 @@ const uint16_t screen_width = 320;
 const uint16_t screen_height = 240;
 
 uint8_t mask_buffer[320 * 240];
-Surface hires_mask(mask_buffer, PixelFormat::M, Size(320, 240));
-Surface lores_mask(mask_buffer, PixelFormat::M, Size(160, 120));
+Surface hires_mask(mask_buffer, PixelFormat::M, screen::hi_res);
+Surface lores_mask(mask_buffer, PixelFormat::M, screen::lo_res);
 Surface mask = hires_mask;
 SpriteSheet *ss;
 /* setup */

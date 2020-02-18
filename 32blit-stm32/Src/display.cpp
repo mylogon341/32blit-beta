@@ -23,11 +23,21 @@ void LTDC_IRQHandler() {
   }
 }
 
+
 namespace display {  
+  
+  const uint16_t screen_width_hi = 320;
+  const uint16_t screen_height_hi = 240;
+
+  const uint16_t screen_width_lo = 160;
+  const uint16_t screen_height_lo = 120;
+
+  const blit::Size lo_res = Size(screen_width_lo, screen_height_lo);
+  const blit::Size hi_res = Size(screen_width_hi, screen_height_hi);
 
   // lo and hi res screen back buffers
-  Surface __fb_hires((uint8_t *)&__fb_start, PixelFormat::RGB, Size(320, 240));
-  Surface __fb_lores((uint8_t *)&__fb_start, PixelFormat::RGB, Size(160, 120));
+  Surface __fb_hires((uint8_t *)&__fb_start, PixelFormat::RGB, hi_res);
+  Surface __fb_lores((uint8_t *)&__fb_start, PixelFormat::RGB, lo_res);
 
   ScreenMode mode = ScreenMode::lores;
   bool needs_render = false;
@@ -56,6 +66,10 @@ namespace display {
   void set_screen_mode(ScreenMode new_mode) {
     mode = new_mode;
     screen = mode == ScreenMode::hires ? __fb_hires : __fb_lores;
+  }
+
+  Size size() {
+    return display::mode == blit::ScreenMode::hires ? hi_res : lo_res;
   }
 
   void flip(const Surface &source) {
