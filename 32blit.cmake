@@ -19,6 +19,7 @@ if (NOT DEFINED BLIT_ONCE)
 	# tool paths
 	set(ASSET_PACKER ${CMAKE_CURRENT_LIST_DIR}/tools/asset-packer)
 	set(SPRITE_BUILDER ${CMAKE_CURRENT_LIST_DIR}/tools/sprite-builder)
+	set(MAP_BUILDER ${CMAKE_CURRENT_LIST_DIR}/tools/map-builder)
 
 	function(pack_sprites FILENAME TYPE OUT_PATH)
 		# TODO: this will break if someone passes the same name in different subdirs
@@ -32,13 +33,44 @@ if (NOT DEFINED BLIT_ONCE)
 		set(${OUT_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}.blit PARENT_SCOPE)
 	endfunction()
 
+	function(pack_map FILENAME TYPE OUT_PATH)
+		get_filename_component(BASE_NAME ${FILENAME} NAME)
+		add_custom_command(
+			OUTPUT ${BASE_NAME}.blit
+			COMMAND ${PYTHON_EXECUTABLE} ${MAP_BUILDER} ${TYPE} --force --out ${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}.blit ${FILENAME}
+			DEPENDS ${FILENAME} ${MAP_BUILDER} ${TOOL_TILED}
+		)
+
+		set(${OUT_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}.blit PARENT_SCOPE)
+	endfunction()
+
+	function (blit_assets_yaml TARGET FILE)
+		# cause cmake to reconfigure whenever the asset list changes
+		set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
+
+		# get the inputs/outputs for the asset tool (at configure time)
+		execute_process(COMMAND ${PYTHON_EXECUTABLE} -m ttblit --debug cmake --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --output ${CMAKE_CURRENT_BINARY_DIR} --cmake ${CMAKE_CURRENT_BINARY_DIR}/assets.cmake)
+		include(${CMAKE_CURRENT_BINARY_DIR}/assets.cmake)
+
+		# do asset packing (at build time)
+		add_custom_command(
+			OUTPUT ${ASSET_OUTPUTS}
+			COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${PYTHON_EXECUTABLE} -m ttblit --debug  pack --force --config ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} --output ${CMAKE_CURRENT_BINARY_DIR}
+			DEPENDS ${ASSET_DEPENDS} ${CMAKE_CURRENT_SOURCE_DIR}/${FILE}
+		)
+
+		# add the outputs as dependencies of the project (also compile any cpp files)
+		target_sources(${TARGET} PRIVATE ${ASSET_OUTPUTS})
+		target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+	endfunction()
+
 	function (blit_assets TARGET)
 		set(ASSET_TYPE "")
 		set(ASSET_FILES)
 
 		foreach(ARG IN LISTS ARGN)
 			# set asset type
-			if(ARG STREQUAL "RAW" OR ARG STREQUAL "SPRITE_PACKED" OR ARG STREQUAL "SPRITE_RAW")
+			if(ARG STREQUAL "RAW" OR ARG STREQUAL "SPRITE_PACKED" OR ARG STREQUAL "SPRITE_RAW" OR ARG STREQUAL "MAP_TILED2BIN")
 				set(ASSET_TYPE ${ARG})
 				continue()
 			elseif(ASSET_TYPE STREQUAL "")
@@ -51,6 +83,8 @@ if (NOT DEFINED BLIT_ONCE)
 				pack_sprites(${ASSET_PATH} packed ASSET_PATH)
 			elseif(ASSET_TYPE STREQUAL "SPRITE_RAW")
 				pack_sprites(${ASSET_PATH} raw ASSET_PATH)
+			elseif(ASSET_TYPE STREQUAL "MAP_TILED2BIN")
+				pack_map(${ASSET_PATH} tiled2bin ASSET_PATH)
 			endif()
 
 			list(APPEND ASSET_FILES ${ASSET_PATH})
