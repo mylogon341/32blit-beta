@@ -6,10 +6,10 @@ struct Direction {
 
     private:
         Dir _direction;
-        const int* _size;
+        int* _size;
     public:
 
-        Direction(Dir d = Dir::RIGHT, const int *size = 0): _direction(d), _size(size) { }
+        Direction(Dir d = Dir::RIGHT, int* size = 0): _direction(d), _size(size) { }
 
         bool isConflicting(const Dir &d) {
             switch (d) {

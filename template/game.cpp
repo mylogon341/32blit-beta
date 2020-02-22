@@ -1,11 +1,6 @@
-// #include <string>
-// #include <string.h>
-// #include <memory>
-// #include <cstdlib>
+
 #include <time.h>
-
-#include "snake.hpp"
-
+#include "snake/snake.hpp"
 #include "game.hpp"
 
 using namespace blit;
@@ -18,7 +13,7 @@ const uint16_t screen_height = 120;
 // const uint16_t screen_width = 320;
 // const uint16_t screen_height = 240;
 
-const int squareSize = 12;
+int squareSize = 12;
 Rect maxSize;
 Snake s;
 
@@ -31,7 +26,6 @@ Vec2 pos(0, 0);
 static Vec2 sz(10,10);
 
 void init () {
-
   set_screen_mode(ScreenMode::lores);
   calculateMaxBorder();
   s = Snake(&squareSize, Vec2(maxSize.x,maxSize.y));
@@ -80,13 +74,12 @@ void render(uint32_t time) {
     debug("crashed!");
     hasCrashed = true;
   } else {
-    screen.pen = Pen(50,200,0,255);
-    screen.rectangle(s.head());
+    s.draw();
   }
 }
 
 bool hasCrashedIntoWalls () {
-  return !maxSize.contains(s.head());
+  return !maxSize.contains(s.headRect());
 }
 
 void setDirection (Dir direction) {
